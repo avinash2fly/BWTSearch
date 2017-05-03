@@ -239,24 +239,29 @@ CharS lookForwardForNextIndex(unsigned int index, const char *indexFile, const c
 }
 
 unsigned int getIndexInBwtFileByCharAndCount(char c, unsigned int pos, const char *filename,const char *indexFile) {
-    ifstream bwtFile(filename,ios::binary);
+    //ifstream bwtFile(filename,ios::binary);
+    FILE* bwtFile;
+    fopen(filename,"rb");
     char ch;
     unsigned int count=0;
     unsigned int index = getStartIndexOfBlock(c,&count,pos,indexFile);
     index=index*BLOCKSIZE;
-    bwtFile.seekg(index);
+    //bwtFile.seekg(index);
+    fseek(bwtFile,index,SEEK_SET);
     //std::vector<char> buffer (BLOCKSIZE,0);
 
     //bwtFile.read(buffer.data(),buffer.size());
     //for(unsigned int i =0;i<BLOCKSIZE;i++){
-    while(bwtFile.get(ch)){
+    while(fread(&ch,1,1,bwtFile)){
         if(ch==c)
             count++;
         if(count==pos)
             break;
     }
-    unsigned x =bwtFile.tellg();
-    bwtFile.close();
+    //unsigned x =bwtFile.tellg();
+    unsigned x =ftell(bwtFile);
+    //bwtFile.close();
+    fclose(bwtFile);
     return (x-1);
 
 }
