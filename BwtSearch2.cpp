@@ -36,7 +36,8 @@ typedef struct array {
 }LocalArray;
 
 const unsigned int  START_INDEX = 0;
-const unsigned int  BLOCKSIZE = 2048;
+const unsigned int  BLOCKSIZE = 25600;
+//const unsigned int  BLOCKSIZE = 30720;
 const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
@@ -169,8 +170,8 @@ string strMakeBybackwardSearch(unsigned int i, const char *indexFile, const char
         c=pair.s;
         i=pair.i;
         str.append(1,c);
-        count++;
-    } while(c!='[' || count>500);
+        //count++;
+    } while(c!='[');
     reverse(str.begin(),str.end());
     return str;
 }
@@ -207,9 +208,9 @@ string forwardSearch(unsigned int index, const char *indexFile, const char *file
     string str="";
     int count =0;
     while(1){
-        count++;
+        //count++;
         CharS pair = lookForwardForNextIndex(index,indexFile,filename);
-        if(pair.s=='[' || count>500){
+        if(pair.s=='['){
             break;
         }
         str.append(1,pair.s);
@@ -392,7 +393,7 @@ signed int getOccurences(unsigned char c, unsigned int location, const char *ind
     // cout << endl << RankAtReference;
     unsigned int count = getNewRankForC(c, filename,location,nearestCheckP,reverse);
 
-    signed long newRank = (reverse)?RankAtReference-count-1:RankAtReference+count-1;
+    signed long newRank = (reverse)?RankAtReference-count:RankAtReference+count-1;
     if(newRank<0)
         return -1;
     return newRank;
@@ -422,6 +423,7 @@ unsigned int getNewRankForC(unsigned char ch, const char *filename, unsigned int
     std::vector<char> buffer (BLOCKSIZE,0);
 
     file.read(buffer.data(),buffer.size());
+    file.close();
     for(unsigned int i =0;i<BLOCKSIZE;i++){
         c=buffer[i];
         if(ch==c){
@@ -431,13 +433,13 @@ unsigned int getNewRankForC(unsigned char ch, const char *filename, unsigned int
             track--;
             if(track<location+1)
                 break;
-            file.seekg(track);
+            //file.seekg(track);
         }
         else{
             track++;
             if(track>location)
                 break;
-            file.seekg(track);
+            //file.seekg(track);
         }
 
     }
@@ -536,8 +538,9 @@ void fillCountArray(const char *indexFile) {
 
 void readFileAndCreateIndex(const char *filename, const char *indexFile) {
     if(WRITEINFILE){
-        fstream in(indexFile , ios::binary);
+        ifstream in(indexFile , ios::binary);
         if(in.good()){
+         //   cout << "file found";
             return ;
             in.close();
         }
