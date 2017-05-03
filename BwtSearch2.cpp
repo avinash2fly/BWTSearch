@@ -19,6 +19,7 @@
 
 using namespace std;
 //using namespace std::chrono;
+const unsigned int  ARRAY_SIZE = 128;
 
 typedef struct searchResult {
     unsigned int first;
@@ -31,12 +32,12 @@ typedef struct CharacterS {
 }CharS;
 
 typedef struct array {
-    unsigned int a[128];
+    unsigned int a[ARRAY_SIZE];
 }LocalArray;
 
 const unsigned int  START_INDEX = 0;
-const unsigned int  BLOCKSIZE = 50000;
-const unsigned int  LINESIZE = 380;
+const unsigned int  BLOCKSIZE = 2048;
+const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
 std::vector<LocalArray> localIndex;
@@ -185,19 +186,19 @@ CharS makeStringByBackwardSearch(unsigned int i, const char *indexFile, const ch
     //std::chrono::duration<double> elapsed = start-finish;
     //cout<<"getCharAtPosition i : "<<elapsed.count()<<endl;
 
-    unsigned int pos = getOccurences(pair.s,i,indexFile,filename);
+    unsigned int pos = getOccurencestillIndex(pair.s,i,indexFile,filename);
 
     //finish = std::chrono::high_resolution_clock::now();
-     //elapsed = finish-start;
+    //elapsed = finish-start;
     //cout<<"getOccurences i : "<<elapsed.count()<<endl;
 
     searchRes result = getFirstAndLast(pair.s);
 
-     //start = std::chrono::high_resolution_clock::now();
+    //start = std::chrono::high_resolution_clock::now();
     //elapsed = start-finish;
     //cout<<"getFirstAndLast i : "<<elapsed.count()<<endl;
 
-    pair.i=result.first+pos;
+    pair.i=result.first+pos-1;
 
     return pair;
 }
@@ -222,7 +223,7 @@ CharS lookForwardForNextIndex(unsigned int index, const char *indexFile, const c
     signed long count=0;
     unsigned int pos=0;
     char c;
-    for(unsigned short i =0; i<127;i++){
+    for(unsigned short i =0; i<ARRAY_SIZE;i++){
         c=i;
         unsigned temp = count+countArray[i];
         if(!(temp>index)){
@@ -481,7 +482,7 @@ void printIndexFile(const char *file) {
         }
     }
     cout << endl;
-    for (unsigned int i=START_INDEX ; i<127;i++){
+    for (unsigned int i=START_INDEX ; i<ARRAY_SIZE;i++){
         cout << countArray[i];
     }
     in_file.close();
@@ -496,8 +497,8 @@ void createIndexFile(const char *filename, const char *indexFile) {
         fillCountArray(indexFile);
     else{
         LocalArray A = localIndex[localIndex.size()-1];
-        countArray = new unsigned int[127];
-        for(unsigned int index=START_INDEX;index<127;index++){
+        countArray = new unsigned int[ARRAY_SIZE];
+        for(unsigned int index=START_INDEX;index<ARRAY_SIZE;index++){
             countArray[index]= A.a[index-START_INDEX];
         }
 
@@ -515,15 +516,16 @@ unsigned int getFILESIZE(const char *filename) {
 
 void fillCountArray(const char *indexFile) {
     ifstream in(indexFile,ios::binary);
-    in.seekg(-380,ios::end);
+    in.seekg(-512,ios::end);
     //cout << in.tellg();
     unsigned int z;
-    countArray = new unsigned int[127];
+    countArray = new unsigned int[ARRAY_SIZE];
     unsigned int index=START_INDEX;
     while(in.read((char*)&z, sizeof(unsigned int))){
         countArray[index]= z;
         index++;
     }
+    //cout << in.tellg();
     in.close();
 }
 
@@ -535,7 +537,7 @@ void readFileAndCreateIndex(const char *filename, const char *indexFile) {
             in.close();
         }
     }
-    unsigned int a[127]={0};
+    unsigned int a[ARRAY_SIZE]={0};
     ifstream input_file (filename,ios::binary);
     if(input_file.is_open()){
         char c;
@@ -572,13 +574,13 @@ void readFileAndCreateIndex(const char *filename, const char *indexFile) {
 
 void writeIntoFile(ofstream &file, unsigned int *a) {
     if(WRITEINFILE){
-        for( unsigned int i = START_INDEX; i < 127; i = i + 1 ){
+        for( unsigned int i = START_INDEX; i < ARRAY_SIZE; i = i + 1 ){
             file.write((char*)&a[i], sizeof(unsigned int));
         }
     }
     else{
         LocalArray localArray;
-        for( unsigned int i = START_INDEX; i < 127; i = i + 1 ){
+        for( unsigned int i = START_INDEX; i < ARRAY_SIZE; i = i + 1 ){
             localArray.a[i-START_INDEX]=a[i];
         }
         localIndex.push_back(localArray);
