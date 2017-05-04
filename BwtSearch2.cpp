@@ -89,6 +89,9 @@ string strMakeBybackwardSearch(unsigned int i, const char *indexFile, const char
 
 CharS makeStringByBackwardSearch(unsigned int i, const char *indexFile, const char *filename, string *str);
 
+signed int getStartingStringIndex(unsigned int i, const char *indexFile, const char *filename);
+void interpretResultNew(unsigned int i, const char *filename, const char *indexFile);
+
 unsigned int *countArray;
 
 
@@ -98,66 +101,69 @@ int main(int argc, char** argv){
         cerr << "Error, wrong number of arguments" << endl;
         return 0;
     }
-    clock_t t1,t2,t3;
-    t1=clock();
+    int main_Result[500];
+    int temp_Result[500];
+    memset(main_Result,-1, sizeof(main_Result));
+    memset(main_Result,-1, sizeof(main_Result));
     const char* filename = argv[1];
     const char* indexFile = argv[2];
     createIndexFile(filename,indexFile);
-    for(unsigned short i=3;i<argc;i++ ){
-        const char* pattern = argv[i];
-        //t1=clock();
-        searchRes res= searchPattern(pattern,indexFile,filename);
-        //t2=clock();
-        float diff = ((float)t2-(float)t1);
-        //cout<<"i : "<<i <<diff<<endl;
-        interpretResult(res,filename,indexFile);
-        t3 = clock();
-        diff = ((float)t3-(float)t2);
-        //cout<<"i : "<<i << "----------------" <<diff<<endl;
+    searchRes res  = searchPattern(argv[3],indexFile,filename);
+    unsigned short j =0;
+    vector<unsigned int> result_set;
+    for(unsigned int i=res.first;i<=res.last;i++){
+        main_Result[j]=getStartingStringIndex(i,indexFile,filename);
+        result_set.push_back(i);
+        j++;
     }
+
+    for(unsigned short i=4;i<argc;i++ ){
+        vector<unsigned int> temp_set;
+        vector<unsigned int> startIndex;
+        vector<unsigned int> tempIndex;
+        const char* pattern = argv[i];
+        res  = searchPattern(pattern,indexFile,filename);
+        searchRes tempStartIndex;
+        //unsigned short z=0;
+        for(unsigned int j=res.first;j<=res.last;j++){
+            unsigned int index = getStartingStringIndex(j,indexFile,filename);
+            unsigned short k=0;
+            while(main_Result[k]!=-1){
+                if(main_Result[k]==index){
+                    //temp_Result[z]=index;
+                    temp_set.push_back(j);
+                    //z++;
+                }
+                k++;
+            }
+        }
+        result_set=temp_set;
+    }
+    for(unsigned int i=0;i<result_set.size();i++)
+        interpretResultNew(result_set[i],filename,indexFile);
     delete [] countArray;
     return 0;
 }
 
 void interpretResult(searchRes result, const char *filename, const char *indexFile) {
-    std::vector<unsigned int> resultsStartVector;
-    // milliseconds ms = duration_cast< milliseconds >(
-    //         system_clock::now().time_since_epoch()
-    // );
-    // cout << ms.count() <<endl;
     string s1="",s2="";
-    clock_t t1,t2,t3;
-    t1=clock();
     for(unsigned i = result.first;i<=result.last;i++){
-        //signed long start = iterateTillStart(i,indexFile,filename);
-        //if(start>=0)
-        //resultsStartVector.push_back(i);
-
-        //auto finish = std::chrono::high_resolution_clock::now();
         s1 = strMakeBybackwardSearch(i,indexFile,filename);
-
-        //auto start = std::chrono::high_resolution_clock::now();
-        //std::chrono::duration<double> elapsed = start-finish;
-        //cout<<"bachward i : "<<elapsed.count()<<endl;
         s2 = forwardSearch(i,indexFile,filename);
-        t3=clock();
-        //finish = std::chrono::high_resolution_clock::now();
-        //elapsed = finish - start;
-        //cout<<"forward i : "<< elapsed.count()<<endl;
-
-        cout << s1+s2 << endl;
-    }
-    //  long ls = ms.count();
-    //  ms = duration_cast< milliseconds >(
-    //          system_clock::now().time_since_epoch()
-    //  );
-    // cout << (ms.count()) <<endl;
-    //ifstream bwtFile(filename,ios::binary);
-    /*for(unsigned int i =0; i<resultsStartVector.size();i++){
-        string s = forwardSearch(resultsStartVector[i],indexFile,filename);
+        string s = s1+s2;
+        if(s=="")
+            continue;
         cout << s << endl;
-    }*/
+    }
+}
 
+void interpretResultNew(unsigned int i, const char *filename, const char *indexFile) {
+    string s1="",s2="";
+        s1 = strMakeBybackwardSearch(i,indexFile,filename);
+        s2 = forwardSearch(i,indexFile,filename);
+        string s = s1+s2;
+        if(s!="")
+            cout << s << endl;
 }
 
 
@@ -182,6 +188,8 @@ string strMakeBybackwardSearch(unsigned int i, const char *indexFile, const char
     reverse(str.begin(),str.end());
     return str;
 }
+
+
 
 CharS makeStringByBackwardSearch(unsigned int i, const char *indexFile, const char *filename, string *str) {
     CharS pair;
@@ -656,4 +664,25 @@ void writeIntoFile(ofstream &file, unsigned int *a) {
 
     }
 
+}
+
+signed int getStartingStringIndex(unsigned int i, const char *indexFile, const char *filename) {
+    string str="";
+    char c;
+    int count=0;
+    bool bracesFound= false;
+    do{
+        CharS pair =  makeStringByBackwardSearch(i,indexFile,filename,&str);
+        c=pair.s;
+        i=pair.i;
+        // str.append(1,c);
+        //count++;
+        if(pair.s==']'){
+            bracesFound=true;
+        }
+    } while(c!='[');
+    if(!bracesFound)
+        return -1;
+    //reverse(str.begin(),str.end());
+    return i;
 }
