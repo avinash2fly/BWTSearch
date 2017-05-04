@@ -36,8 +36,8 @@ typedef struct array {
 }LocalArray;
 
 const unsigned int  START_INDEX = 0;
-const unsigned int  BLOCKSIZE = 25600;
-//const unsigned int  BLOCKSIZE = 30720;
+//const unsigned int  BLOCKSIZE = 25600;
+const unsigned int  BLOCKSIZE = 1024;
 const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
