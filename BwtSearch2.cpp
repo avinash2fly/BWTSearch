@@ -37,8 +37,8 @@ typedef struct array {
 
 const unsigned int  START_INDEX = 0;
 //const unsigned int  BLOCKSIZE = 25600;
-//const unsigned int  BLOCKSIZE = 1024;
-const unsigned int  BLOCKSIZE = 5;
+const unsigned int  BLOCKSIZE = 1024;
+//const unsigned int  BLOCKSIZE = 5;
 const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
@@ -249,6 +249,7 @@ unsigned int getIndexInBwtFileByCharAndCount(char c, unsigned int pos, const cha
     unsigned int index = getStartIndexOfBlock(c,&count,pos,indexFile);
     index=index*BLOCKSIZE;
     bwtFile.seekg(index);
+    bwtFile.read(&ch,1);
     //fseek(bwtFile,index,SEEK_SET);
     //std::vector<char> buffer (BLOCKSIZE,0);
 
@@ -544,7 +545,7 @@ void printIndexFile(const char *file) {
 void createIndexFile(const char *filename, const char *indexFile) {
     unsigned int size = getFILESIZE(filename);
     if(size<FILESIZELIMIT)
-        WRITEINFILE = 1;
+        WRITEINFILE = 0;
     readFileAndCreateIndex(filename,indexFile);
     if(WRITEINFILE)
         fillCountArray(indexFile);
@@ -636,7 +637,11 @@ void writeIntoFile(ofstream &file, unsigned int *a) {
         LocalArray localArray;
         for( unsigned int i = START_INDEX; i < ARRAY_SIZE; i = i + 1 ){
             localArray.a[i-START_INDEX]=a[i];
+            /*if(a[i]>0){
+                cout <<  (char)i << "->" << a[i] << ":";
+            }*/
         }
+        //cout << endl;
         localIndex.push_back(localArray);
 
     }
