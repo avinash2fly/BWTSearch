@@ -37,7 +37,8 @@ typedef struct array {
 
 const unsigned int  START_INDEX = 0;
 //const unsigned int  BLOCKSIZE = 25600;
-const unsigned int  BLOCKSIZE = 1024;
+//const unsigned int  BLOCKSIZE = 1024;
+const unsigned int  BLOCKSIZE = 5;
 const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
@@ -260,14 +261,14 @@ unsigned int getIndexInBwtFileByCharAndCount(char c, unsigned int pos, const cha
             break;
     }
     unsigned x =bwtFile.tellg();
-   // unsigned x =ftell(bwtFile);
+    // unsigned x =ftell(bwtFile);
     bwtFile.close();
-   // fclose(bwtFile);
+    // fclose(bwtFile);
     return (x-1);
 
 }
 
-unsigned int getStartIndexOfBlock(char c, unsigned int *count, unsigned int pos, const char *indexFile) {
+/*unsigned int getStartIndexOfBlock(char c, unsigned int *count, unsigned int pos, const char *indexFile) {
     ifstream iFile;
     if(WRITEINFILE)
         iFile.open(indexFile, ios::binary);
@@ -292,6 +293,51 @@ unsigned int getStartIndexOfBlock(char c, unsigned int *count, unsigned int pos,
     if(blockNum==1)
         return 0;
     return blockNum-2;
+}*/
+
+unsigned int getStartIndexOfBlock(char c, unsigned int *count, unsigned int pos, const char *indexFile) {
+    ifstream iFile;
+    signed int end=0;
+    signed int start=0;
+    if(WRITEINFILE){
+        iFile.open(indexFile, ios::binary | ios::ate);
+        end=(iFile.tellg())/LINESIZE;
+    }
+    else{
+        end= sizeof(localIndex);
+    }
+
+    unsigned int blockNum=0,l_blockNum;
+    unsigned int c_count=0,n_count=0;
+
+    while (start <= end) {
+        int blockNum = (start + end) / 2;
+        if(WRITEINFILE){
+            unsigned int index = (blockNum*LINESIZE)+((unsigned int)c - START_INDEX)*4;
+            iFile.seekg(index);
+            iFile.read((char*)&c_count, sizeof(unsigned int));
+            index = ((blockNum+1)*LINESIZE)+((unsigned int)c - START_INDEX)*4;
+            iFile.seekg(index);
+            iFile.read((char*)&n_count, sizeof(unsigned int));
+        }
+        else{
+            LocalArray A;
+            A=localIndex[blockNum];
+            c_count = A.a[(unsigned int)c-START_INDEX];
+            A=localIndex[blockNum+1];
+            n_count = A.a[(unsigned int)c-START_INDEX];
+            // cout <<"check count " << c_count <<" " <<A.a[(unsigned int)c-START_INDEX];
+        }
+
+        if ( (n_count>= pos && c_count<pos) || (end==start)){
+            *count=c_count;
+            return blockNum;
+        }
+        else if (c_count >= pos)
+            end = blockNum;
+        else
+            start = blockNum +1;
+    }
 }
 
 signed long iterateTillStart(unsigned int i, const char *indexFile, const char *filename) {
@@ -498,7 +544,7 @@ void printIndexFile(const char *file) {
 void createIndexFile(const char *filename, const char *indexFile) {
     unsigned int size = getFILESIZE(filename);
     if(size<FILESIZELIMIT)
-        WRITEINFILE = 0;
+        WRITEINFILE = 1;
     readFileAndCreateIndex(filename,indexFile);
     if(WRITEINFILE)
         fillCountArray(indexFile);
@@ -540,7 +586,7 @@ void readFileAndCreateIndex(const char *filename, const char *indexFile) {
     if(WRITEINFILE){
         ifstream in(indexFile , ios::binary);
         if(in.good()){
-         //   cout << "file found";
+            //   cout << "file found";
             return ;
             in.close();
         }
