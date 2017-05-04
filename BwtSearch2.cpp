@@ -37,8 +37,8 @@ typedef struct array {
 
 const unsigned int  START_INDEX = 0;
 //const unsigned int  BLOCKSIZE = 25600;
-const unsigned int  BLOCKSIZE = 1024;
-//const unsigned int  BLOCKSIZE = 5;
+//const unsigned int  BLOCKSIZE = 1024;
+const unsigned int  BLOCKSIZE = 5;
 const unsigned int  LINESIZE = 512;
 bool  WRITEINFILE = 1;
 const unsigned short  FILESIZELIMIT =5200;
@@ -166,13 +166,19 @@ string strMakeBybackwardSearch(unsigned int i, const char *indexFile, const char
     string str="";
     char c;
     int count=0;
+    bool bracesFound= false;
     do{
         CharS pair =  makeStringByBackwardSearch(i,indexFile,filename,&str);
         c=pair.s;
         i=pair.i;
         str.append(1,c);
         //count++;
+        if(pair.s==']'){
+            bracesFound=true;
+        }
     } while(c!='[');
+    if(!bracesFound)
+        return "";
     reverse(str.begin(),str.end());
     return str;
 }
@@ -208,11 +214,15 @@ CharS makeStringByBackwardSearch(unsigned int i, const char *indexFile, const ch
 string forwardSearch(unsigned int index, const char *indexFile, const char *filename) {
     string str="";
     int count =0;
+
     while(1){
         //count++;
         CharS pair = lookForwardForNextIndex(index,indexFile,filename);
         if(pair.s=='['){
             break;
+        }
+        if(pair.s==']'){
+            return "";
         }
         str.append(1,pair.s);
         index=pair.i;
@@ -305,7 +315,7 @@ unsigned int getStartIndexOfBlock(char c, unsigned int *count, unsigned int pos,
         end=(iFile.tellg())/LINESIZE;
     }
     else{
-        end= sizeof(localIndex);
+        end= localIndex.size();
     }
 
     unsigned int blockNum=0,l_blockNum;
